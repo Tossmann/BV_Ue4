@@ -14,7 +14,7 @@ import java.io.File;
 public class ImageAnalysis extends JPanel {
 	
 	private static final long serialVersionUID = 1L;
-	private static final String author = "<Your Name>";		// TODO: type in your name here
+	private static final String author = "Trautmann, Heinig";		// TODO: type in your name here
 	private static final String initialFilename = "mountains.png";
 	private static final File openPath = new File(".");
 	private static final int border = 10;
@@ -30,10 +30,11 @@ public class ImageAnalysis extends JPanel {
 	private JSlider brightnessSlider;				// brightness Slider
 	
 	// TODO: add an array to hold the histogram of the loaded image
-	
+	private int[] histogram;
 	// TODO: add an array that holds the ARGB-Pixels of the originally loaded image
-	
+	private int[] origARGB;
 	// TODO: add a contrast slider
+	private JSlider contrastSlider;			//contrast Slider
 	
 	private JLabel statusLine;				// to print some status text
 	
@@ -52,9 +53,9 @@ public class ImageAnalysis extends JPanel {
         imgView.setMaxSize(new Dimension(maxWidth, maxHeight));
         
         // TODO: set the histogram array of histView and statsView
-        
+        histoView.setHistogram(new int[256]);
         // TODO: initialize the original ARGB-Pixel array from the loaded image
-       
+        origARGB = new int[imgView.getWidth()*imgView.getHeight()];
 		// load image button
         JButton load = new JButton("Open Image");
         load.addActionListener(new ActionListener() {
@@ -65,7 +66,7 @@ public class ImageAnalysis extends JPanel {
         			imgView.setMaxSize(new Dimension(maxWidth, maxHeight));
         			
         	        // TODO: initialize the original ARGB-Pixel array from the newly loaded image
-        			
+        			origARGB = new int[imgView.getWidth()*imgView.getHeight()];
         			frame.pack();
 	                processImage();
         		}
@@ -76,9 +77,8 @@ public class ImageAnalysis extends JPanel {
         reset.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
         		brightnessSlider.setValue(0);
-
+        		contrastSlider.setValue(0);
         		// TODO: reset contrast slider
-
         		processImage();
 	    	}        	
 	    });
@@ -117,10 +117,20 @@ public class ImageAnalysis extends JPanel {
         });
         
         // TODO: setup contrast slider
+        contrastSlider = new JSlider(-graySteps, graySteps, 0);
+        TitledBorder titBorderContrast = BorderFactory.createTitledBorder("Contrast");
+        titBorder.setTitleColor(Color.BLACK);
+        contrastSlider.setBorder(titBorderContrast);
+        contrastSlider.addChangeListener(new ChangeListener() {
+        	public void stateChanged(ChangeEvent e) {
+        		processImage();				
+        	}        	
+        });
         
         botControls.add(brightnessSlider);
         statusLine.setAlignmentX(Component.CENTER_ALIGNMENT);
         botControls.add(statusLine);
+        botControls.add(contrastSlider);
 
         // add to main panel
         add(topControls, BorderLayout.NORTH);
