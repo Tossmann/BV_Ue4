@@ -227,11 +227,9 @@ public class ImageAnalysis extends JPanel {
 			}
 		}
 		histoView.setHistogram(histogram);
-
-    	for(int i = 0; i<histogram.length;i++){
-    		System.out.println(i + " :" + histogram[i]);
-    	}
-		  	
+		statsView.setDimension(width, height);
+		statsView.setHistogram(histogram);
+			  	
 		imgView.applyChanges();
 		histoView.update();
 		statsView.update();
