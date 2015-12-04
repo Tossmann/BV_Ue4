@@ -8,6 +8,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.sun.org.apache.xalan.internal.xsltc.compiler.sym;
+
 import java.awt.event.*;
 import java.awt.*;
 import java.io.File;
@@ -38,6 +40,7 @@ public class ImageAnalysis extends JPanel {
 	private int[] histogram = new int[graySteps];
 	// TODO: add an array that holds the ARGB-Pixels of the originally loaded image
 	private int[] origARGB;
+	private int[] dstARGB;
 	// TODO: add a contrast slider
 	private JSlider contrastSlider;			//contrast Slider
 
@@ -62,8 +65,18 @@ public class ImageAnalysis extends JPanel {
 		// TODO: initialize the original ARGB-Pixel array from the loaded image
 		height = imgView.getImgHeight();
 		width = imgView.getImgWidth();
-
 		origARGB = new int[width*height];
+		dstARGB = new int[width*height];
+		dstARGB = (int[])imgView.getPixels();
+		
+		
+		for(int x = 0;x < width; x++){
+			for(int y = 0; y < height; y++){
+				int pos = y*width+x;
+				origARGB[pos] = dstARGB[pos];
+			}
+		}
+
 		// load image button
 		JButton load = new JButton("Open Image");
 		load.addActionListener(new ActionListener() {
@@ -77,7 +90,8 @@ public class ImageAnalysis extends JPanel {
 					width = imgView.getImgWidth();
 					// TODO: initialize the original ARGB-Pixel array from the newly loaded image
 					origARGB = new int[width*height];
-
+					dstARGB = new int[width*height];
+					origARGB = (int[])imgView.getPixels();
 					frame.pack();
 					processImage();
 				}
@@ -123,8 +137,8 @@ public class ImageAnalysis extends JPanel {
 		brightnessSlider.setBorder(titBorder);
 		brightnessSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				processImage();				
-			}        	
+				processImage();
+			}       	
 		});
 
 		// TODO: setup contrast slider
@@ -134,7 +148,7 @@ public class ImageAnalysis extends JPanel {
 		contrastSlider.setBorder(titBorderContrast);
 		contrastSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				processImage();				
+				processImage();
 			}        	
 		});
 
@@ -213,19 +227,24 @@ public class ImageAnalysis extends JPanel {
 	 * Update histogram, histogram view and statistics view.
 	 */
 	protected void processImage() {
-
 		Arrays.fill(histogram, 0);
-		origARGB = imgView.getPixels();
 		long startTime = System.currentTimeMillis();
 
 		// TODO: add your processing code here
+		int[] actualView = origARGB.clone();
+		
 		for(int x = 0; x < width; x++){
 			for(int y = 0; y < height; y++){
 				int pos = y*width+x;
-				int grayValue = (origARGB[pos] & 0xFF);
+				int grayValue = (dstARGB[pos] & 0xFF);
 				histogram[grayValue]++;
 			}
 		}
+
+		actualView = contrastChanged(actualView);
+		actualView = brightnessChanged(actualView);
+		imgView.setPixels(actualView);
+		
 		histoView.setHistogram(histogram);
 		statsView.setDimension(width, height);
 		statsView.setHistogram(histogram);
@@ -239,7 +258,37 @@ public class ImageAnalysis extends JPanel {
 		statusLine.setText("Processing time = " + time + " ms.");
 	}
 
+	private int[] contrastChanged(int[] actualView) {	
+		
+		double value = contrastSlider.getValue();
+		double contrastFactor = (259.0*(value+255.0))/(255.0*(259.0-value));
+		for(int x = 0; x < width; x++){
+			for(int y = 0; y < height; y++){
+				int pos = y*width+x;
+				int grayValue = putInRange((int)(contrastFactor*((origARGB[pos] & 0xFF)-128)+128));
+				actualView[pos] = (0xFF<<24) | (grayValue<<16) | (grayValue<<8) | grayValue;
+			}
+		}
+		return actualView;
+	}
 
-
+	private int[] brightnessChanged(int[] actualView) {	
+		
+		int value = brightnessSlider.getValue();
+		for(int x = 0; x < width; x++){
+			for(int y = 0; y < height; y++){
+				int pos = y*width+x;
+				int grayValue = putInRange((actualView[pos] & 0xFF)+ value);
+				actualView[pos] = (0xFF<<24) | (grayValue<<16) | (grayValue<<8) | grayValue;
+			}
+		}
+		return actualView;
+	}
+	
+	private int putInRange(int colorValue) {
+		if(colorValue<0)colorValue = 0;
+		if(colorValue>255)colorValue = 255;
+		return colorValue;
+	} 
 }
 

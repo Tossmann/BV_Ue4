@@ -96,7 +96,7 @@ public class StatsView extends JPanel {
 		int counter = 255;
 
 		while(histogram[counter] < 1){
-			maxVal = counter+1;
+			maxVal = counter-1;
 			counter--;
 		}
 		return maxVal;
