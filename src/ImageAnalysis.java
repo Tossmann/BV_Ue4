@@ -68,14 +68,8 @@ public class ImageAnalysis extends JPanel {
 		origARGB = new int[width*height];
 		dstARGB = new int[width*height];
 		dstARGB = (int[])imgView.getPixels();
+		origARGB = dstARGB.clone();
 		
-		
-		for(int x = 0;x < width; x++){
-			for(int y = 0; y < height; y++){
-				int pos = y*width+x;
-				origARGB[pos] = dstARGB[pos];
-			}
-		}
 
 		// load image button
 		JButton load = new JButton("Open Image");
@@ -91,7 +85,8 @@ public class ImageAnalysis extends JPanel {
 					// TODO: initialize the original ARGB-Pixel array from the newly loaded image
 					origARGB = new int[width*height];
 					dstARGB = new int[width*height];
-					origARGB = (int[])imgView.getPixels();
+					dstARGB = (int[])imgView.getPixels();
+					origARGB = dstARGB.clone();
 					frame.pack();
 					processImage();
 				}
@@ -102,7 +97,7 @@ public class ImageAnalysis extends JPanel {
 		reset.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				brightnessSlider.setValue(0);
-				contrastSlider.setValue(0);
+				contrastSlider.setValue(10);
 				// TODO: reset contrast slider
 				processImage();
 			}        	
@@ -132,22 +127,34 @@ public class ImageAnalysis extends JPanel {
 
 		// brightness slider
 		brightnessSlider = new JSlider(-graySteps, graySteps, 0);
-		TitledBorder titBorder = BorderFactory.createTitledBorder("Brightness");
+		int brightness = brightnessSlider.getValue();
+		String brightnessText = "Brightness: " +brightness;
+		TitledBorder titBorder = BorderFactory.createTitledBorder(brightnessText);
 		titBorder.setTitleColor(Color.GRAY);
 		brightnessSlider.setBorder(titBorder);
 		brightnessSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
+				int brightness = brightnessSlider.getValue();
+				String brightnessText = "Brightness: " +brightness;
+				TitledBorder titBorder = BorderFactory.createTitledBorder(brightnessText);
+				brightnessSlider.setBorder(titBorder);
 				processImage();
 			}       	
 		});
 
 		// TODO: setup contrast slider
-		contrastSlider = new JSlider(-graySteps, graySteps, 0);
-		TitledBorder titBorderContrast = BorderFactory.createTitledBorder("Contrast");
+		contrastSlider = new JSlider(0, 100, 10);
+		double contrast = contrastSlider.getValue()*1.0/10;
+		String contrastText = "Contrast: " +contrast;
+		TitledBorder titBorderContrast = BorderFactory.createTitledBorder(contrastText);
 		titBorder.setTitleColor(Color.BLACK);
 		contrastSlider.setBorder(titBorderContrast);
 		contrastSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
+				double contrast = contrastSlider.getValue()*1.0/10;
+				String contrastText = "Contrast: " +contrast;
+				TitledBorder titBorderContrast = BorderFactory.createTitledBorder(contrastText);
+				contrastSlider.setBorder(titBorderContrast);
 				processImage();
 			}        	
 		});
@@ -259,9 +266,8 @@ public class ImageAnalysis extends JPanel {
 	}
 
 	private int[] contrastChanged(int[] actualView) {	
-		
-		double value = contrastSlider.getValue();
-		double contrastFactor = (259.0*(value+255.0))/(255.0*(259.0-value));
+		double contrastFactor = contrastSlider.getValue()*1.0/10;
+		System.out.println(contrastFactor);
 		for(int x = 0; x < width; x++){
 			for(int y = 0; y < height; y++){
 				int pos = y*width+x;
@@ -275,6 +281,7 @@ public class ImageAnalysis extends JPanel {
 	private int[] brightnessChanged(int[] actualView) {	
 		
 		int value = brightnessSlider.getValue();
+
 		for(int x = 0; x < width; x++){
 			for(int y = 0; y < height; y++){
 				int pos = y*width+x;
