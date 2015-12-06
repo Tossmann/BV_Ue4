@@ -143,15 +143,15 @@ public class ImageAnalysis extends JPanel {
 		});
 
 		// TODO: setup contrast slider
-		contrastSlider = new JSlider(0, 100, 10);
-		double contrast = contrastSlider.getValue()*1.0/10;
+		contrastSlider = new JSlider(0, 1000, 100);
+		double contrast = contrastSlider.getValue()*1.0/100;
 		String contrastText = "Contrast: " +contrast;
 		TitledBorder titBorderContrast = BorderFactory.createTitledBorder(contrastText);
 		titBorder.setTitleColor(Color.BLACK);
 		contrastSlider.setBorder(titBorderContrast);
 		contrastSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				double contrast = contrastSlider.getValue()*1.0/10;
+				double contrast = contrastSlider.getValue()*1.0/100;
 				String contrastText = "Contrast: " +contrast;
 				TitledBorder titBorderContrast = BorderFactory.createTitledBorder(contrastText);
 				contrastSlider.setBorder(titBorderContrast);
@@ -266,7 +266,7 @@ public class ImageAnalysis extends JPanel {
 	}
 
 	private int[] contrastChanged(int[] actualView) {	
-		double contrastFactor = contrastSlider.getValue()*1.0/10;
+		double contrastFactor = contrastSlider.getValue()*1.0/100;
 		System.out.println(contrastFactor);
 		for(int x = 0; x < width; x++){
 			for(int y = 0; y < height; y++){
