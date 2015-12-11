@@ -67,9 +67,9 @@ public class ImageAnalysis extends JPanel {
 		width = imgView.getImgWidth();
 		origARGB = new int[width*height];
 		dstARGB = new int[width*height];
-		dstARGB = (int[])imgView.getPixels();
+		dstARGB = imgView.getPixels();
 		origARGB = dstARGB.clone();
-		
+
 
 		// load image button
 		JButton load = new JButton("Open Image");
@@ -97,12 +97,18 @@ public class ImageAnalysis extends JPanel {
 		reset.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				brightnessSlider.setValue(0);
-				contrastSlider.setValue(10);
+				contrastSlider.setValue(100);
 				// TODO: reset contrast slider
 				processImage();
 			}        	
 		});
 
+		JButton autoContrast = new JButton("Auto Contrast");
+		autoContrast.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				autoContrast();
+			}        	
+		});
 
 		// some status text
 		statusLine = new JLabel(" ");
@@ -111,6 +117,7 @@ public class ImageAnalysis extends JPanel {
 		JPanel topControls = new JPanel(new GridBagLayout());
 		topControls.add(load);
 		topControls.add(reset);
+		topControls.add(autoContrast);
 
 		// center view
 		JPanel centerControls = new JPanel();
@@ -238,24 +245,23 @@ public class ImageAnalysis extends JPanel {
 		long startTime = System.currentTimeMillis();
 
 		// TODO: add your processing code here
-		int[] actualView = origARGB.clone();
-		
+		imgView.setPixels(origARGB.clone());
+
+		brightnessChanged();
+		contrastChanged();	
+
 		for(int x = 0; x < width; x++){
 			for(int y = 0; y < height; y++){
 				int pos = y*width+x;
 				int grayValue = (dstARGB[pos] & 0xFF);
 				histogram[grayValue]++;
 			}
-		}
+		}	
 
-		actualView = contrastChanged(actualView);
-		actualView = brightnessChanged(actualView);
-		imgView.setPixels(actualView);
-		
 		histoView.setHistogram(histogram);
 		statsView.setDimension(width, height);
 		statsView.setHistogram(histogram);
-			  	
+
 		imgView.applyChanges();
 		histoView.update();
 		statsView.update();
@@ -265,37 +271,68 @@ public class ImageAnalysis extends JPanel {
 		statusLine.setText("Processing time = " + time + " ms.");
 	}
 
-	private int[] contrastChanged(int[] actualView) {	
+	private void contrastChanged() {	
 		double contrastFactor = contrastSlider.getValue()*1.0/100;
-		System.out.println(contrastFactor);
 		for(int x = 0; x < width; x++){
 			for(int y = 0; y < height; y++){
 				int pos = y*width+x;
-				int grayValue = putInRange((int)(contrastFactor*((origARGB[pos] & 0xFF)-128)+128));
-				actualView[pos] = (0xFF<<24) | (grayValue<<16) | (grayValue<<8) | grayValue;
+				int grayValue = putInRange((int)(contrastFactor*((dstARGB[pos] & 0xFF)-128)+128));
+				dstARGB[pos] = (0xFF<<24) | (grayValue<<16) | (grayValue<<8) | grayValue;
 			}
 		}
-		return actualView;
 	}
 
-	private int[] brightnessChanged(int[] actualView) {	
-		
+	private void brightnessChanged() {	
+
 		int value = brightnessSlider.getValue();
 
 		for(int x = 0; x < width; x++){
 			for(int y = 0; y < height; y++){
 				int pos = y*width+x;
-				int grayValue = putInRange((actualView[pos] & 0xFF)+ value);
-				actualView[pos] = (0xFF<<24) | (grayValue<<16) | (grayValue<<8) | grayValue;
+				int grayValue = putInRange((dstARGB[pos] & 0xFF)+ value);
+				dstARGB[pos] = (0xFF<<24) | (grayValue<<16) | (grayValue<<8) | grayValue;
 			}
 		}
-		return actualView;
 	}
-	
+
 	private int putInRange(int colorValue) {
 		if(colorValue<0)colorValue = 0;
 		if(colorValue>255)colorValue = 255;
 		return colorValue;
 	} 
+
+	private void autoContrast(){
+
+		int amountColorValues = calculateMax() - calculateMin();
+		int newMid = amountColorValues/2 +calculateMin();
+		double contrastChange = (256.0/amountColorValues*100);
+
+		brightnessSlider.setValue(128-newMid); //histogramm in die Mitte schieben
+		contrastSlider.setValue((int)contrastChange);
+
+		processImage();
+	}
+
+	public int calculateMin(){
+		int minVal = 0;
+		int counter = 0;
+
+		while(histogram[counter] < 1){
+			minVal = counter+1;
+			counter++;
+		}
+		return minVal;
+	}
+
+	public int calculateMax(){
+		int maxVal = 255;
+		int counter = 255;
+
+		while(histogram[counter] < 1){
+			maxVal = counter-1;
+			counter--;
+		}
+		return maxVal;
+	}
 }
 

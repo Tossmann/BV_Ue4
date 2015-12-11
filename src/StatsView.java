@@ -68,7 +68,6 @@ public class StatsView extends JPanel {
 		if(histogram == null) {
 			return false;
 		}
-
 		// TODO: calculate and display statistic values
 		setValue(0, calculateMin());
 		setValue(1, calculateMax());
