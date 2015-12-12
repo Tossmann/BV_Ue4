@@ -43,6 +43,7 @@ public class ImageAnalysis extends JPanel {
 	private int[] dstARGB;
 	// TODO: add a contrast slider
 	private JSlider contrastSlider;			//contrast Slider
+	private JSlider quantisizeSlider;
 
 	private JLabel statusLine;				// to print some status text
 
@@ -98,6 +99,7 @@ public class ImageAnalysis extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				brightnessSlider.setValue(0);
 				contrastSlider.setValue(100);
+				quantisizeSlider.setValue(10);
 				// TODO: reset contrast slider
 				processImage();
 			}        	
@@ -109,6 +111,23 @@ public class ImageAnalysis extends JPanel {
 				autoContrast();
 			}        	
 		});
+		
+		JButton getHisto = new JButton("Histogram Values");
+		getHisto.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				getHisto();
+			}
+
+			private void getHisto() {
+				System.out.println("+++ START +++");
+				for(int i = 0; i < histogram.length; i++){
+					if(histogram[i]>0)
+						System.out.println(i);
+				}
+				System.out.println("+++ END +++");
+				
+			}        	
+		});
 
 		// some status text
 		statusLine = new JLabel(" ");
@@ -118,6 +137,7 @@ public class ImageAnalysis extends JPanel {
 		topControls.add(load);
 		topControls.add(reset);
 		topControls.add(autoContrast);
+		topControls.add(getHisto);
 
 		// center view
 		JPanel centerControls = new JPanel();
@@ -137,7 +157,7 @@ public class ImageAnalysis extends JPanel {
 		int brightness = brightnessSlider.getValue();
 		String brightnessText = "Brightness: " +brightness;
 		TitledBorder titBorder = BorderFactory.createTitledBorder(brightnessText);
-		titBorder.setTitleColor(Color.GRAY);
+		titBorder.setTitleColor(Color.BLACK);
 		brightnessSlider.setBorder(titBorder);
 		brightnessSlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
@@ -166,10 +186,28 @@ public class ImageAnalysis extends JPanel {
 			}        	
 		});
 
+		// quantisierer slider
+		quantisizeSlider = new JSlider(10, 2550, 10);
+		double quantisize = quantisizeSlider.getValue()/10.0;
+		String quantisizeText = "Quantisize: " +quantisize;
+		TitledBorder titBorderQuantisize = BorderFactory.createTitledBorder(quantisizeText);
+		titBorder.setTitleColor(Color.BLACK);
+		quantisizeSlider.setBorder(titBorderQuantisize);
+		quantisizeSlider.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				double quantisize = quantisizeSlider.getValue()/10.0;
+				String quantisizeText = "Quantisize: " + quantisize;
+				TitledBorder titBorderQuantisize = BorderFactory.createTitledBorder(quantisizeText);
+				quantisizeSlider.setBorder(titBorderQuantisize);
+				processImage();
+			}       	
+		});
+
 		botControls.add(brightnessSlider);
 		statusLine.setAlignmentX(Component.CENTER_ALIGNMENT);
 		botControls.add(statusLine);
 		botControls.add(contrastSlider);
+		botControls.add(quantisizeSlider);
 
 		// add to main panel
 		add(topControls, BorderLayout.NORTH);
@@ -248,7 +286,8 @@ public class ImageAnalysis extends JPanel {
 		imgView.setPixels(origARGB.clone());
 
 		brightnessChanged();
-		contrastChanged();	
+		contrastChanged();
+		quantisize();
 
 		for(int x = 0; x < width; x++){
 			for(int y = 0; y < height; y++){
@@ -303,8 +342,8 @@ public class ImageAnalysis extends JPanel {
 
 	private void autoContrast(){
 
-		int amountColorValues = calculateMax() - calculateMin();
-		int newMid = amountColorValues/2 +calculateMin();
+		int amountColorValues = calculate99() - calculate1();
+		int newMid = amountColorValues/2 +calculate1();
 		double contrastChange = (256.0/amountColorValues*100);
 
 		brightnessSlider.setValue(128-newMid); //histogramm in die Mitte schieben
@@ -313,26 +352,41 @@ public class ImageAnalysis extends JPanel {
 		processImage();
 	}
 
-	public int calculateMin(){
-		int minVal = 0;
-		int counter = 0;
+	private void quantisize(){
+			double delta = quantisizeSlider.getValue()/10.0;
 
-		while(histogram[counter] < 1){
-			minVal = counter+1;
+			for(int x = 0; x < width; x++){
+				for(int y = 0; y < height; y++){
+					int pos = y*width+x;
+					int grayValue = putInRange((int)(Math.round(((dstARGB[pos] & 0xFF)/delta))*delta));
+					dstARGB[pos] = (0xFF<<24) | (grayValue<<16) | (grayValue<<8) | grayValue;
+				}
+			}
+		
+	}
+	
+	public int calculate99(){
+		int percent = ((width*height)/100)*99;
+		int counter = 0;
+		int position = 0;
+
+		while(position<percent){
+			position += histogram[counter];
 			counter++;
 		}
-		return minVal;
+		return counter-1;
 	}
+	
+	public int calculate1(){
+		int onePercent = (width*height)/100;
+		int counter = 0;
+		int position = 0;
 
-	public int calculateMax(){
-		int maxVal = 255;
-		int counter = 255;
-
-		while(histogram[counter] < 1){
-			maxVal = counter-1;
-			counter--;
+		while(position<onePercent){
+			position += histogram[counter];
+			counter++;
 		}
-		return maxVal;
+		return counter-1;
 	}
 }
 
