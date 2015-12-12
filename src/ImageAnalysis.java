@@ -119,13 +119,36 @@ public class ImageAnalysis extends JPanel {
 			}
 
 			private void getHisto() {
+				int counter = 0;
 				System.out.println("+++ START +++");
+				System.out.println();
+				System.out.println("These color values are represented in the picture:");
+				System.out.println();
 				for(int i = 0; i < histogram.length; i++){
 					if(histogram[i]>0)
+					{
 						System.out.println(i);
+						counter++;
+					}
 				}
+				System.out.println();
+				System.out.println("total: " + counter + "/256");
+				counter = 0;
+				System.out.println();
+				System.out.println("These aren't:");
+				System.out.println();
+				for(int i = 0; i < histogram.length; i++){
+					if(histogram[i]==0)
+					{
+						System.out.println(i);
+						counter++;
+					}
+				}
+				System.out.println();
+				System.out.println("total: " + counter + "/256");
+				System.out.println();
 				System.out.println("+++ END +++");
-				
+				System.out.println();
 			}        	
 		});
 
